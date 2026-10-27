@@ -2,6 +2,10 @@
 
 A single-screen geography trivia game: five question cards, tap a card to slide it aside and reveal four answers, and the card turns green (correct) or red (wrong). Score out of 5 sits top right; "Play again" unlocks once all five are answered and deals five unseen questions.
 
+## Play
+
+Open [`index.html`](index.html) in any browser. It's a standalone page with no build step and no dependencies, apart from Google Fonts. It's sized for phones and scales up to tablet and desktop. The bank holds 50 questions, so the first 10 rounds never repeat a question; after that the deck reshuffles.
+
 ## Design
 
 The interactive design lives in [`design/`](design/), exported from the Claude Design canvas:

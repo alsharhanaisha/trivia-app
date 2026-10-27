@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#161638">
+<title>The Geography Trivia Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg-top: #161638;
+    --bg-mid: #2a2347;
+    --bg-bottom: #563457;
+    --card: #38667E;
+    --answer: #563457;
+    --answer-chosen: #7D4C80;
+    --correct: #19C26B;
+    --correct-fg: #04240F;
+    --wrong: #E0243A;
+    --muted: #C9C3E6;
+    --note: #D6D0EE;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: linear-gradient(165deg, var(--bg-top) 0%, var(--bg-mid) 55%, var(--bg-bottom) 100%) fixed;
+    background-color: var(--bg-top);
+    font-family: 'Poppins', system-ui, sans-serif;
+    color: #FFFFFF;
+    display: flex;
+    justify-content: center;
+    padding: max(clamp(16px, 4vw, 48px), env(safe-area-inset-top)) 16px max(clamp(16px, 4vw, 48px), env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { -webkit-tap-highlight-color: transparent; }
+  button:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
+
+  main {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2.5vw, 28px);
+  }
+
+  /* Header */
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .title-block { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .eyebrow {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  }
+  h1 {
+    margin: 0;
+    font-family: 'Lora', Georgia, serif; font-weight: 700;
+    font-size: clamp(22px, 3.6vw, 34px); line-height: 1.15;
+  }
+  .score {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 16px; border-radius: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  .score-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .score-value { font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: clamp(22px, 3vw, 30px); line-height: 1.1; }
+  .score-value small { font-size: 0.6em; color: var(--muted); }
+  .score-value.bump { animation: bump 420ms var(--ease); }
+  @keyframes bump { 40% { transform: scale(1.22); } }
+
+  /* Cards */
+  ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    position: relative;
+    height: 100px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(8, 8, 28, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: height 380ms var(--ease);
+  }
+  .card.settling { transition-delay: 220ms; }
+  .card.entering { animation: deal 420ms var(--ease) both; }
+  @keyframes deal { from { opacity: 0; transform: translateY(14px); } }
+
+  .answers {
+    position: absolute; inset: 0;
+    padding: 12px 12px 12px 60px;
+    display: flex; flex-direction: column; gap: 8px;
+    visibility: hidden;
+    transition: visibility 0s linear 440ms;
+  }
+  .card.open .answers, .card.picked .answers { visibility: visible; transition-delay: 0s; }
+  .answers-prompt {
+    margin: 0; font-size: 13px; line-height: 1.4; color: #E4DFF5;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  }
+  .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .option {
+    min-height: 44px; padding: 6px 10px; border-radius: 12px;
+    border: 1.5px solid rgba(255, 255, 255, 0.16);
+    background: var(--answer); color: #FFFFFF;
+    font-family: 'Lora', Georgia, serif; font-weight: 600; font-size: 14px; line-height: 1.2;
+    cursor: pointer;
+    transition: background 160ms ease, opacity 160ms ease, border-color 160ms ease;
+  }
+  .option:disabled { cursor: default; }
+  .option.chosen { background: var(--answer-chosen); border-color: #FFFFFF; }
+  .card.picked .option:not(.chosen) { opacity: 0.55; }
+
+  .face {
+    position: absolute; inset: 0 0 auto 0;
+    min-height: 100%;
+    width: 100%; margin: 0; padding: 0;
+    border: none; border-radius: 16px;
+    display: flex; align-items: stretch;
+    text-align: left; font-family: inherit;
+    cursor: pointer;
+    background-color: var(--card); color: #FFFFFF;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    transform: translateX(0);
+    transition: transform 440ms var(--ease), background-color 320ms ease 380ms, color 320ms ease 380ms;
+  }
+  .card.open .face, .card.picked .face { transform: translateX(calc(-100% + 48px)); }
+  .card.correct .face { background-color: var(--correct); color: var(--correct-fg); }
+  .card.wrong .face { background-color: var(--wrong); }
+  .card.done .face { cursor: default; }
+
+  .face-body { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 4px 14px 16px; }
+  .num {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: 15px;
+  }
+  .texts { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .prompt { font-size: 15px; font-weight: 500; line-height: 1.4; }
+  .result { font-size: 12.5px; font-weight: 600; line-height: 1.35; }
+  .result:empty { display: none; }
+  .icon { flex-shrink: 0; width: 48px; display: flex; align-items: center; justify-content: center; }
+  .icon svg { display: none; }
+  .card.idle .icon .i-left,
+  .card.open .icon .i-right,
+  .card.picked .icon .i-right,
+  .card.correct .icon .i-check,
+  .card.wrong .icon .i-cross { display: block; }
+
+  /* Footer */
+  footer { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 4px; }
+  .play {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 52px; width: 100%; max-width: 360px; padding: 0 28px;
+    border-radius: 9999px; border: none;
+    background: #F4EFFF; color: #241c45;
+    font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: opacity 240ms ease, transform 160ms ease;
+  }
+  .play:disabled { opacity: 0.4; cursor: not-allowed; }
+  .play:not(:disabled):active { transform: scale(0.97); }
+  .play.ready { animation: pulse 1.6s ease-in-out 2; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(244, 239, 255, 0.18), 0 10px 30px rgba(0, 0, 0, 0.3); } }
+  .note { margin: 0; font-size: 12.5px; color: var(--note); text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span id="progress">Round 1 · 0 of 5 answered</span>
+      </div>
+      <h1>The Geography Trivia Game</h1>
+    </div>
+    <div class="score" role="status" aria-live="polite">
+      <span class="score-label">Score</span>
+      <span class="score-value"><span id="score">0</span><small>/5</small></span>
+    </div>
+  </header>
+
+  <ol id="cards"></ol>
+
+  <footer>
+    <button type="button" class="play" id="play" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+      Play again
+    </button>
+    <p class="note" id="note">Answer all 5 questions to unlock Play again</p>
+  </footer>
+</main>
+
+<template id="card-tpl">
+  <li class="card idle">
+    <div class="answers" aria-hidden="true">
+      <p class="answers-prompt"></p>
+      <div class="options"></div>
+    </div>
+    <button type="button" class="face" aria-expanded="false">
+      <span class="face-body">
+        <span class="num"></span>
+        <span class="texts">
+          <span class="prompt"></span>
+          <span class="result"></span>
+        </span>
+      </span>
+      <span class="icon">
+        <svg class="i-left" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        <svg class="i-right" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        <svg class="i-check" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Correct"><path d="M20 6L9 17l-5-5"/></svg>
+        <svg class="i-cross" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Wrong"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+      </span>
+    </button>
+  </li>
+</template>
+
+<script>
+(() => {
+  // a = index of the correct option in o
+  const BANK = [
+    { q: 'What is the capital of Australia?', o: ['Sydney', 'Canberra', 'Melbourne', 'Perth'], a: 1 },
+    { q: 'Which is the longest river in Africa?', o: ['Congo', 'Niger', 'Nile', 'Zambezi'], a: 2 },
+    { q: 'Which country has the most natural lakes?', o: ['Canada', 'Russia', 'USA', 'Finland'], a: 0 },
+    { q: 'What is the smallest country in the world by area?', o: ['Monaco', 'San Marino', 'Vatican City', 'Liechtenstein'], a: 2 },
+    { q: 'Mount Kilimanjaro is located in which country?', o: ['Kenya', 'Tanzania', 'Uganda', 'Ethiopia'], a: 1 },
+    { q: 'What is the largest hot desert on Earth?', o: ['Sahara', 'Gobi', 'Kalahari', 'Arabian'], a: 0 },
+    { q: 'What is the capital of Canada?', o: ['Toronto', 'Vancouver', 'Montreal', 'Ottawa'], a: 3 },
+    { q: 'Which strait separates Europe from Africa?', o: ['Bosphorus', 'Gibraltar', 'Hormuz', 'Malacca'], a: 1 },
+    { q: 'Which country spans the most time zones?', o: ['Russia', 'USA', 'France', 'China'], a: 2 },
+    { q: 'What is the deepest lake in the world?', o: ['Superior', 'Tanganyika', 'Baikal', 'Victoria'], a: 2 },
+    { q: 'What is the capital of Brazil?', o: ['Rio de Janeiro', 'São Paulo', 'Brasília', 'Salvador'], a: 2 },
+    { q: 'The Andes run along which side of South America?', o: ['Eastern', 'Northern', 'Western', 'Southern'], a: 2 },
+    { q: 'What is the largest island in the world?', o: ['Greenland', 'New Guinea', 'Borneo', 'Madagascar'], a: 0 },
+    { q: 'Which country is shaped like a boot?', o: ['Greece', 'Italy', 'Portugal', 'Croatia'], a: 1 },
+    { q: 'What is the capital of Turkey?', o: ['Istanbul', 'Ankara', 'Izmir', 'Bursa'], a: 1 },
+    { q: 'Which is the largest ocean?', o: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], a: 3 },
+    { q: 'Machu Picchu is found in which country?', o: ['Bolivia', 'Peru', 'Ecuador', 'Chile'], a: 1 },
+    { q: 'The Danube river flows into which sea?', o: ['Black Sea', 'Baltic Sea', 'Adriatic Sea', 'North Sea'], a: 0 },
+    { q: 'What is the capital of New Zealand?', o: ['Auckland', 'Wellington', 'Christchurch', 'Queenstown'], a: 1 },
+    { q: 'Which is the most populous country in Africa?', o: ['Nigeria', 'Ethiopia', 'Egypt', 'DR Congo'], a: 0 },
+    { q: 'What is the highest waterfall in the world?', o: ['Niagara Falls', 'Victoria Falls', 'Angel Falls', 'Iguazu Falls'], a: 2 },
+    { q: 'The Atacama Desert is mostly in which country?', o: ['Argentina', 'Chile', 'Peru', 'Mexico'], a: 1 },
+    { q: 'What is the capital of Morocco?', o: ['Casablanca', 'Marrakesh', 'Rabat', 'Fez'], a: 2 },
+    { q: 'Mount Everest sits on the border of which two countries?', o: ['Nepal & China', 'Nepal & India', 'India & China', 'Bhutan & China'], a: 0 },
+    { q: 'What is the largest country in South America?', o: ['Argentina', 'Brazil', 'Colombia', 'Peru'], a: 1 },
+    { q: 'What is the capital of the United Arab Emirates?', o: ['Dubai', 'Sharjah', 'Abu Dhabi', 'Al Ain'], a: 2 },
+    { q: 'Which line divides Earth into northern and southern halves?', o: ['Prime Meridian', 'Equator', 'Tropic of Cancer', 'Date Line'], a: 1 },
+    { q: 'Which of these countries is landlocked?', o: ['Paraguay', 'Uruguay', 'Ecuador', 'Venezuela'], a: 0 },
+    { q: 'What is the capital of Iceland?', o: ['Oslo', 'Reykjavík', 'Helsinki', 'Tórshavn'], a: 1 },
+    { q: 'Which country has the most islands?', o: ['Indonesia', 'Philippines', 'Sweden', 'Norway'], a: 2 },
+    { q: 'The Great Barrier Reef lies off which Australian state?', o: ['Queensland', 'New South Wales', 'Victoria', 'Western Australia'], a: 0 },
+    { q: 'What is the capital of Kenya?', o: ['Mombasa', 'Nairobi', 'Kisumu', 'Nakuru'], a: 1 },
+    { q: 'Which river flows through Baghdad?', o: ['Euphrates', 'Jordan', 'Tigris', 'Indus'], a: 2 },
+    { q: 'What is the largest lake in Africa?', o: ['Lake Victoria', 'Lake Tanganyika', 'Lake Malawi', 'Lake Chad'], a: 0 },
+    { q: 'What is the capital of Argentina?', o: ['Córdoba', 'Rosario', 'Buenos Aires', 'Mendoza'], a: 2 },
+    { q: 'What is the capital of Japan?', o: ['Osaka', 'Kyoto', 'Tokyo', 'Yokohama'], a: 2 },
+    { q: 'Which is the longest river in South America?', o: ['Amazon', 'Paraná', 'Orinoco', 'Magdalena'], a: 0 },
+    { q: 'Which country is home to the city of Petra?', o: ['Egypt', 'Jordan', 'Syria', 'Lebanon'], a: 1 },
+    { q: 'What is the capital of Egypt?', o: ['Alexandria', 'Luxor', 'Giza', 'Cairo'], a: 3 },
+    { q: 'Which mountain range separates Europe and Asia?', o: ['Alps', 'Carpathians', 'Urals', 'Caucasus'], a: 2 },
+    { q: 'What is the largest country in the world by area?', o: ['Canada', 'China', 'USA', 'Russia'], a: 3 },
+    { q: 'What is the capital of Saudi Arabia?', o: ['Jeddah', 'Riyadh', 'Mecca', 'Dammam'], a: 1 },
+    { q: 'Which sea has no coastline?', o: ['Sargasso Sea', 'Coral Sea', 'Red Sea', 'Caspian Sea'], a: 0 },
+    { q: 'Which country has the largest population in the world?', o: ['China', 'India', 'USA', 'Indonesia'], a: 1 },
+    { q: 'What is the capital of Spain?', o: ['Barcelona', 'Seville', 'Madrid', 'Valencia'], a: 2 },
+    { q: 'Which river runs through Paris?', o: ['Rhine', 'Seine', 'Loire', 'Rhône'], a: 1 },
+    { q: 'Which continent has the most countries?', o: ['Asia', 'Europe', 'Africa', 'South America'], a: 2 },
+    { q: 'What is the capital of South Korea?', o: ['Busan', 'Seoul', 'Incheon', 'Daegu'], a: 1 },
+    { q: 'The Panama Canal links the Pacific with which ocean?', o: ['Indian', 'Arctic', 'Southern', 'Atlantic'], a: 3 },
+    { q: 'What is the capital of Oman?', o: ['Muscat', 'Salalah', 'Sohar', 'Nizwa'], a: 0 }
+  ];
+
+  const ROUND_SIZE = 5;
+  const CLOSED_H = 100;
+  const PICK_DELAY = 260;
+
+  const $cards = document.getElementById('cards');
+  const $score = document.getElementById('score');
+  const $progress = document.getElementById('progress');
+  const $play = document.getElementById('play');
+  const $note = document.getElementById('note');
+  const tpl = document.getElementById('card-tpl');
+
+  const shuffle = (list) => {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  // order is a shuffled deck of bank indexes; cursor marks how far we've dealt
+  const state = { order: shuffle(BANK.map((_, i) => i)), cursor: 0, round: 0, cards: [], recycled: false };
+
+  function deal() {
+    state.recycled = false;
+    if (state.cursor + ROUND_SIZE > state.order.length) {
+      state.order = shuffle(state.order);
+      state.cursor = 0;
+      state.recycled = true;
+    }
+    const ids = state.order.slice(state.cursor, state.cursor + ROUND_SIZE);
+    state.cursor += ROUND_SIZE;
+    state.round += 1;
+    state.cards = ids.map((id) => ({ q: BANK[id], phase: 'idle', chosen: -1 }));
+    buildCards();
+    update();
+  }
+
+  function buildCards() {
+    $cards.innerHTML = '';
+    state.cards.forEach((card, i) => {
+      const li = tpl.content.firstElementChild.cloneNode(true);
+      li.classList.add('entering');
+      li.style.animationDelay = (i * 60) + 'ms';
+      li.addEventListener('animationend', () => li.classList.remove('entering'), { once: true });
+      li.querySelector('.num').textContent = i + 1;
+      li.querySelector('.prompt').textContent = card.q.q;
+      li.querySelector('.answers-prompt').textContent = card.q.q;
+      const opts = li.querySelector('.options');
+      card.q.o.forEach((label, k) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'option';
+        b.textContent = label;
+        b.addEventListener('click', () => pick(i, k));
+        opts.appendChild(b);
+      });
+      li.querySelector('.face').addEventListener('click', () => toggle(i));
+      card.el = li;
+      $cards.appendChild(li);
+    });
+  }
+
+  function toggle(i) {
+    const cur = state.cards[i].phase;
+    if (cur === 'picked' || cur === 'done') return;
+    state.cards.forEach((c, k) => {
+      if (k === i) c.phase = cur === 'open' ? 'idle' : 'open';
+      else if (c.phase === 'open') c.phase = 'idle';
+    });
+    update();
+    if (state.cards[i].phase === 'open') {
+      state.cards[i].el.querySelector('.option').focus({ preventScroll: true });
+    }
+  }
+
+  function pick(i, choice) {
+    const card = state.cards[i];
+    if (card.phase !== 'open') return;
+    card.phase = 'picked';
+    card.chosen = choice;
+    update();
+    setTimeout(() => {
+      card.phase = 'done';
+      update();
+      card.el.querySelector('.face').focus({ preventScroll: true });
+      if (card.chosen === card.q.a) {
+        $score.parentElement.classList.remove('bump');
+        void $score.offsetWidth;
+        $score.parentElement.classList.add('bump');
+      }
+    }, PICK_DELAY);
+  }
+
+  function update() {
+    let score = 0;
+    let answered = 0;
+
+    state.cards.forEach((card) => {
+      const { el, q, phase, chosen } = card;
+      const open = phase === 'open' || phase === 'picked';
+      const done = phase === 'done';
+      const right = done && chosen === q.a;
+      if (done) answered++;
+      if (right) score++;
+
+      el.className = 'card ' + phase + (done ? (right ? ' correct settling' : ' wrong settling') : '');
+      const face = el.querySelector('.face');
+      face.setAttribute('aria-expanded', String(open));
+      face.disabled = phase === 'picked';
+      face.setAttribute('aria-disabled', String(done));
+      el.querySelector('.answers').setAttribute('aria-hidden', String(!open));
+      el.querySelectorAll('.option').forEach((b, k) => {
+        b.disabled = phase !== 'open';
+        b.tabIndex = phase === 'open' ? 0 : -1;
+        b.classList.toggle('chosen', phase === 'picked' && chosen === k);
+      });
+      el.querySelector('.result').textContent = !done ? ''
+        : right ? 'Correct: ' + q.o[q.a]
+        : 'You said ' + q.o[chosen] + ' · Answer: ' + q.o[q.a];
+
+      // Height follows whichever layer is showing, so long prompts never clip.
+      const layer = open ? el.querySelector('.answers') : face;
+      el.style.height = Math.max(CLOSED_H, measure(layer, open)) + 'px';
+    });
+
+    $score.textContent = score;
+    $progress.textContent = 'Round ' + state.round + ' · ' + answered + ' of ' + ROUND_SIZE + ' answered';
+
+    const finished = answered === ROUND_SIZE;
+    const wasLocked = $play.disabled;
+    $play.disabled = !finished;
+    if (finished && wasLocked) $play.classList.add('ready');
+    if (!finished) $play.classList.remove('ready');
+
+    if (finished) $note.textContent = 'You scored ' + score + ' out of 5. Play again for 5 new questions.';
+    else if (state.recycled) $note.textContent = 'You have seen every question, so the deck was reshuffled.';
+    else $note.textContent = 'Answer all 5 questions to unlock Play again';
+  }
+
+  function measure(layer, isAnswers) {
+    if (isAnswers) {
+      // .answers is inset:0, so sum its content instead of reading its box
+      const cs = getComputedStyle(layer);
+      let h = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const kids = layer.children;
+      for (let k = 0; k < kids.length; k++) h += kids[k].offsetHeight;
+      h += parseFloat(cs.rowGap || cs.gap || 0) * (kids.length - 1);
+      return Math.ceil(h) + 2;
+    }
+    // .face stretches to the card, so measure its text block, not the face itself
+    return Math.ceil(layer.querySelector('.texts').offsetHeight) + 28 + 2;
+  }
+
+  $play.addEventListener('click', () => {
+    if ($play.disabled) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    deal();
+  });
+
+  window.addEventListener('resize', update);
+  if (document.fonts) document.fonts.ready.then(update);
+
+  deal();
+})();
+</script>
+</body>
+</html>
