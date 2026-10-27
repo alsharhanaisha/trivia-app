@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Geography Trivia: game screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&amp;family=Poppins:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="box-sizing: border-box; width: 100%; min-height: 100vh; background: linear-gradient(165deg, #161638 0%, #2a2347 55%, #563457 100%); font-family: 'Poppins', system-ui, sans-serif; color: #FFFFFF; display: flex; justify-content: center; padding: clamp(16px, 4vw, 48px) 16px">
+<main style="width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: clamp(16px, 2.5vw, 28px)">
+
+<header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #C9C3E6">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+<span>Round {{round}} · {{answered}} of 5 answered</span>
+</div>
+<h1 style="margin: 0; font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: clamp(22px, 3.6vw, 34px); line-height: 1.15">The Geography Trivia Game</h1>
+</div>
+<div role="status" aria-live="polite" style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 8px 16px; border-radius: 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16)">
+<span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #C9C3E6">Score</span>
+<span style="font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: clamp(22px, 3vw, 30px); line-height: 1.1">{{score}}<span style="font-size: 0.6em; color: #C9C3E6">/5</span></span>
+</div>
+</header>
+
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{cards}}" as="item" hint-placeholder-count="5">
+<li style="position: relative; height: {{item.rowH}}; border-radius: 16px; overflow: hidden; background: rgba(8,8,28,0.5); border: 1px solid rgba(255,255,255,0.08); transition: height 380ms cubic-bezier(.2,.8,.2,1) {{item.rowDelay}}">
+
+<div aria-hidden="{{item.answersHidden}}" style="position: absolute; inset: 0; box-sizing: border-box; padding: 12px 12px 12px 60px; display: flex; flex-direction: column; gap: 8px">
+<p style="margin: 0; font-size: 13px; line-height: 1.4; color: #E4DFF5; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden">{{item.prompt}}</p>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{item.options}}" as="opt" hint-placeholder-count="4">
+<button type="button" onClick="{{opt.pick}}" disabled="{{opt.disabled}}" style="min-height: 44px; padding: 6px 10px; border-radius: 12px; border: 1.5px solid {{opt.border}}; background: {{opt.bg}}; opacity: {{opt.opacity}}; color: #FFFFFF; font-family: 'Lora', Georgia, serif; font-weight: 600; font-size: 14px; line-height: 1.2; cursor: pointer; transition: background 160ms ease, opacity 160ms ease">{{opt.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<button type="button" onClick="{{item.toggle}}" disabled="{{item.locked}}" aria-expanded="{{item.expanded}}" style="position: absolute; inset: 0; width: 100%; margin: 0; padding: 0; border: none; border-radius: 16px; display: flex; align-items: stretch; text-align: left; font-family: inherit; cursor: {{item.cursor}}; background-color: {{item.bg}}; color: {{item.fg}}; box-shadow: 0 10px 28px rgba(0,0,0,0.28); transform: {{item.tx}}; transition: transform 440ms cubic-bezier(.2,.8,.2,1), background-color 320ms ease 380ms, color 320ms ease 380ms">
+<span style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 4px 14px 16px">
+<span style="flex-shrink: 0; width: 30px; height: 30px; border-radius: 9999px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: 15px">{{item.num}}</span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 15px; font-weight: 500; line-height: 1.4">{{item.prompt}}</span>
+<sc-if value="{{item.done}}" hint-placeholder-val="{{false}}">
+<span style="font-size: 12.5px; font-weight: 600; line-height: 1.35">{{item.result}}</span>
+</sc-if>
+</span>
+</span>
+<span style="flex-shrink: 0; width: 48px; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{item.showLeft}}" hint-placeholder-val="{{true}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</sc-if>
+<sc-if value="{{item.showRight}}" hint-placeholder-val="{{false}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+</sc-if>
+<sc-if value="{{item.showCheck}}" hint-placeholder-val="{{false}}">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Correct"><path d="M20 6L9 17l-5-5"></path></svg>
+</sc-if>
+<sc-if value="{{item.showCross}}" hint-placeholder-val="{{false}}">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Wrong"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+</sc-if>
+</span>
+</button>
+</li>
+</sc-for>
+</ol>
+
+<footer style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 4px">
+<button type="button" onClick="{{playAgain}}" disabled="{{locked}}" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; width: 100%; max-width: 360px; padding: 0 28px; border-radius: 9999px; border: none; background: #F4EFFF; color: #241c45; font-family: 'Lora', Georgia, serif; font-weight: 700; font-size: 18px; cursor: {{playCursor}}; opacity: {{playOpacity}}; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: opacity 240ms ease">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"></path><path d="M3 21v-5h5"></path></svg>
+Play again
+</button>
+<p style="margin: 0; font-size: 12.5px; color: #D6D0EE; text-align: center">{{footerNote}}</p>
+</footer>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const order = this.shuffle(this.bank().map((_, i) => i));
+    this.state = {
+      order: order,
+      cursor: 5,
+      ids: order.slice(0, 5),
+      cards: [0, 1, 2, 3, 4].map(() => ({ phase: 'idle', chosen: -1 })),
+      round: 1,
+      recycled: false
+    };
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.timer);
+  }
+
+  bank() {
+    return [
+      { q: 'What is the capital of Australia?', o: ['Sydney', 'Canberra', 'Melbourne', 'Perth'], a: 1 },
+      { q: 'Which is the longest river in Africa?', o: ['Congo', 'Niger', 'Nile', 'Zambezi'], a: 2 },
+      { q: 'Which country has the most natural lakes?', o: ['Canada', 'Russia', 'USA', 'Finland'], a: 0 },
+      { q: 'What is the smallest country in the world by area?', o: ['Monaco', 'San Marino', 'Vatican City', 'Liechtenstein'], a: 2 },
+      { q: 'Mount Kilimanjaro is located in which country?', o: ['Kenya', 'Tanzania', 'Uganda', 'Ethiopia'], a: 1 },
+      { q: 'What is the largest hot desert on Earth?', o: ['Sahara', 'Gobi', 'Kalahari', 'Arabian'], a: 0 },
+      { q: 'What is the capital of Canada?', o: ['Toronto', 'Vancouver', 'Montreal', 'Ottawa'], a: 3 },
+      { q: 'Which strait separates Europe from Africa?', o: ['Bosphorus', 'Gibraltar', 'Hormuz', 'Malacca'], a: 1 },
+      { q: 'Which country spans the most time zones?', o: ['Russia', 'USA', 'France', 'China'], a: 2 },
+      { q: 'What is the deepest lake in the world?', o: ['Superior', 'Tanganyika', 'Baikal', 'Victoria'], a: 2 },
+      { q: 'What is the capital of Brazil?', o: ['Rio de Janeiro', 'São Paulo', 'Brasília', 'Salvador'], a: 2 },
+      { q: 'The Andes run along which side of South America?', o: ['Eastern', 'Northern', 'Western', 'Southern'], a: 2 },
+      { q: 'What is the largest island in the world?', o: ['Greenland', 'New Guinea', 'Borneo', 'Madagascar'], a: 0 },
+      { q: 'Which country is shaped like a boot?', o: ['Greece', 'Italy', 'Portugal', 'Croatia'], a: 1 },
+      { q: 'What is the capital of Turkey?', o: ['Istanbul', 'Ankara', 'Izmir', 'Bursa'], a: 1 },
+      { q: 'Which is the largest ocean?', o: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], a: 3 },
+      { q: 'Machu Picchu is found in which country?', o: ['Bolivia', 'Peru', 'Ecuador', 'Chile'], a: 1 },
+      { q: 'The Danube river flows into which sea?', o: ['Black Sea', 'Baltic Sea', 'Adriatic Sea', 'North Sea'], a: 0 },
+      { q: 'What is the capital of New Zealand?', o: ['Auckland', 'Wellington', 'Christchurch', 'Queenstown'], a: 1 },
+      { q: 'Which is the most populous country in Africa?', o: ['Nigeria', 'Ethiopia', 'Egypt', 'DR Congo'], a: 0 },
+      { q: 'What is the highest waterfall in the world?', o: ['Niagara Falls', 'Victoria Falls', 'Angel Falls', 'Iguazu Falls'], a: 2 },
+      { q: 'The Atacama Desert is mostly in which country?', o: ['Argentina', 'Chile', 'Peru', 'Mexico'], a: 1 },
+      { q: 'What is the capital of Morocco?', o: ['Casablanca', 'Marrakesh', 'Rabat', 'Fez'], a: 2 },
+      { q: 'Mount Everest sits on the border of which two countries?', o: ['Nepal & China', 'Nepal & India', 'India & China', 'Bhutan & China'], a: 0 },
+      { q: 'What is the largest country in South America?', o: ['Argentina', 'Brazil', 'Colombia', 'Peru'], a: 1 },
+      { q: 'What is the capital of the United Arab Emirates?', o: ['Dubai', 'Sharjah', 'Abu Dhabi', 'Al Ain'], a: 2 },
+      { q: 'Which line divides Earth into northern and southern halves?', o: ['Prime Meridian', 'Equator', 'Tropic of Cancer', 'Date Line'], a: 1 },
+      { q: 'Which of these countries is landlocked?', o: ['Paraguay', 'Uruguay', 'Ecuador', 'Venezuela'], a: 0 },
+      { q: 'What is the capital of Iceland?', o: ['Oslo', 'Reykjavík', 'Helsinki', 'Tórshavn'], a: 1 },
+      { q: 'Which country has the most islands?', o: ['Indonesia', 'Philippines', 'Sweden', 'Norway'], a: 2 },
+      { q: 'The Great Barrier Reef lies off which Australian state?', o: ['Queensland', 'New South Wales', 'Victoria', 'Western Australia'], a: 0 },
+      { q: 'What is the capital of Kenya?', o: ['Mombasa', 'Nairobi', 'Kisumu', 'Nakuru'], a: 1 },
+      { q: 'Which river flows through Baghdad?', o: ['Euphrates', 'Jordan', 'Tigris', 'Indus'], a: 2 },
+      { q: 'What is the largest lake in Africa?', o: ['Lake Victoria', 'Lake Tanganyika', 'Lake Malawi', 'Lake Chad'], a: 0 },
+      { q: 'What is the capital of Argentina?', o: ['Córdoba', 'Rosario', 'Buenos Aires', 'Mendoza'], a: 2 }
+    ];
+  }
+
+  shuffle(list) {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  toggle(i) {
+    this.setState((s) => {
+      const cur = s.cards[i].phase;
+      if (cur === 'picked' || cur === 'done') return null;
+      const cards = s.cards.map((c, k) => {
+        if (k === i) return { phase: cur === 'open' ? 'idle' : 'open', chosen: -1 };
+        return c.phase === 'open' ? { phase: 'idle', chosen: -1 } : c;
+      });
+      return { cards: cards };
+    });
+  }
+
+  pick(i, choice) {
+    if (this.state.cards[i].phase !== 'open') return;
+    const set = (phase) => this.setState((s) => ({
+      cards: s.cards.map((c, k) => (k === i ? { phase: phase, chosen: choice } : c))
+    }));
+    set('picked');
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => set('done'), 260);
+  }
+
+  playAgain() {
+    this.setState((s) => {
+      let order = s.order;
+      let cursor = s.cursor;
+      let recycled = false;
+      if (cursor + 5 > order.length) {
+        order = this.shuffle(order);
+        cursor = 0;
+        recycled = true;
+      }
+      return {
+        order: order,
+        cursor: cursor + 5,
+        ids: order.slice(cursor, cursor + 5),
+        cards: [0, 1, 2, 3, 4].map(() => ({ phase: 'idle', chosen: -1 })),
+        round: s.round + 1,
+        recycled: recycled
+      };
+    });
+  }
+
+  renderVals() {
+    const bank = this.bank();
+    const s = this.state;
+    let score = 0;
+    let answered = 0;
+
+    const cards = s.ids.map((id, i) => {
+      const q = bank[id];
+      const c = s.cards[i];
+      const open = c.phase === 'open' || c.phase === 'picked';
+      const done = c.phase === 'done';
+      const right = done && c.chosen === q.a;
+      if (done) answered++;
+      if (right) score++;
+
+      let bg = '#38667E';
+      let fg = '#FFFFFF';
+      if (done && right) { bg = '#19C26B'; fg = '#04240F'; }
+      if (done && !right) { bg = '#E0243A'; }
+
+      const options = q.o.map((label, k) => {
+        const chosen = c.phase === 'picked' && c.chosen === k;
+        return {
+          label: label,
+          pick: () => this.pick(i, k),
+          disabled: c.phase !== 'open',
+          bg: chosen ? '#7D4C80' : '#563457',
+          border: chosen ? '#FFFFFF' : 'rgba(255,255,255,0.16)',
+          opacity: c.phase === 'picked' && !chosen ? '0.55' : '1'
+        };
+      });
+
+      return {
+        num: i + 1,
+        prompt: q.q,
+        options: options,
+        toggle: () => this.toggle(i),
+        locked: done || c.phase === 'picked',
+        expanded: open,
+        answersHidden: open ? 'false' : 'true',
+        done: done,
+        result: right ? 'Correct: ' + q.o[q.a] : 'You said ' + q.o[c.chosen] + ' · Answer: ' + q.o[q.a],
+        rowH: open ? '172px' : '100px',
+        rowDelay: done ? '220ms' : '0ms',
+        tx: open ? 'translateX(calc(-100% + 48px))' : 'translateX(0)',
+        bg: bg,
+        fg: fg,
+        cursor: done ? 'default' : 'pointer',
+        showLeft: c.phase === 'idle',
+        showRight: open,
+        showCheck: right,
+        showCross: done && !right
+      };
+    });
+
+    const locked = answered < 5;
+    let footerNote = 'Answer all 5 questions to unlock Play again';
+    if (!locked) footerNote = 'You scored ' + score + ' out of 5. Play again for 5 new questions.';
+    else if (s.recycled) footerNote = 'You have seen every question, so the deck was reshuffled.';
+
+    return {
+      cards: cards,
+      score: score,
+      answered: answered,
+      round: s.round,
+      locked: locked,
+      playAgain: () => this.playAgain(),
+      playOpacity: locked ? '0.4' : '1',
+      playCursor: locked ? 'not-allowed' : 'pointer',
+      footerNote: footerNote
+    };
+  }
+}
+</script>
+</body>
+</html>
